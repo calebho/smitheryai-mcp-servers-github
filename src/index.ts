@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { Octokit } from "octokit"
+import { fetch as undiciFetch, EnvHttpProxyAgent } from "undici"
 import { z } from "zod"
 import { registerIssueTools } from "./tools/issues.js"
 import { registerPullRequestTools } from "./tools/pullrequests.js"
@@ -21,8 +22,21 @@ export default function ({ config }: { config: z.infer<typeof configSchema> }) {
 			version: "1.0.0",
 		})
 
-		// Initialize Octokit client
-		const octokit = new Octokit({ auth: config.githubPersonalAccessToken })
+		// Create custom fetch with proxy support
+		const proxyFetch = (url: string, options?: RequestInit) => {
+			return undiciFetch(url, {
+				...options,
+				dispatcher: new EnvHttpProxyAgent(),
+			})
+		}
+
+		// Initialize Octokit client with proxy support
+		const octokit = new Octokit({
+			auth: config.githubPersonalAccessToken,
+			request: {
+				fetch: proxyFetch,
+			},
+		})
 
 		// Register tool groups
 		registerSearchTools(server, octokit)
