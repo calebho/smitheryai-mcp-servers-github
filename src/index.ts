@@ -24,6 +24,7 @@ export default function ({ config }: { config: z.infer<typeof configSchema> }) {
 
 		// Create custom fetch with proxy support
 		const proxyFetch = (url: string, options?: RequestInit) => {
+			// @ts-expect-error - undici's fetch signature differs from standard fetch
 			return undiciFetch(url, {
 				...options,
 				dispatcher: new EnvHttpProxyAgent(),
